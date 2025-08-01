@@ -28,6 +28,6 @@ COPY . .
 EXPOSE 4000
 
 # Start the Node.js application
-CMD ["npm", "start"]
+CMD ["node", "dist/main.js"]
 
  
