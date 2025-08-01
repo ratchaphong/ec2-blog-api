@@ -2,7 +2,7 @@ FROM node:20-slim AS builder
 
 WORKDIR /app
 COPY package*.json ./
-COPY prisma ./prisma        # ต้องมีในโฟลเดอร์เดียวกัน
+COPY prisma ./prisma
 RUN npm install
 RUN npx prisma generate
 
