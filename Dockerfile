@@ -1,5 +1,5 @@
-# Use Node.js 18 on Debian Buster Slim as the base image
-FROM node:18-buster-slim
+# Use Node.js 18 on Debian Slim as the base image
+FROM node:18-slim
 
 # Set the environment variable for the timezone
 ENV TZ=Asia/Bangkok
