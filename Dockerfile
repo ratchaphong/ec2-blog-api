@@ -1,25 +1,39 @@
-FROM node:20-slim AS builder
+# --- 1. Build Stage ---
+FROM node:20-alpine AS builder
 
 WORKDIR /app
+
+# Install dependencies separately to optimize caching
 COPY package*.json ./
-COPY prisma ./prisma
-COPY .env ./
-RUN npm install
+RUN npm ci
+
+# Copy the rest of the code
+COPY . .
+
+# Generate Prisma client (adjust if your schema is in another folder)
 RUN npx prisma generate
 
-COPY . .
+# Build the NestJS app
 RUN npm run build
 
-FROM node:20-slim
+# --- 2. Production Stage ---
+FROM node:20-alpine AS prod
+
 WORKDIR /app
 
-COPY --from=builder /app/dist ./dist
+# Only copy package.json and built files, NOT node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/.prisma ./node_modules/.prisma
 
-RUN npm ci --only=production
+# If you use Prisma migrations at runtime (optional)
+# COPY --from=builder /app/prisma ./prisma
 
+ENV NODE_ENV=production
+
+# Start the app
+CMD ["node", "dist/main"]
+
+# Expose the port (change if you use a different port)
 EXPOSE 4000
-CMD ["node", "dist/main.js"]

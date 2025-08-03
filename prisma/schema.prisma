@@ -60,7 +60,3 @@ model Comment {
   createdAt DateTime  @default(now())
 }
 
-generator erd {
-  provider = "prisma-erd-generator"
-  output   = "./erd/erd.svg"
-}
