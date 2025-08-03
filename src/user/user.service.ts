@@ -1,11 +1,29 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+// import { ProfileService } from 'src/profile/profile.service';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    // private readonly profilePrisma: ProfileService,
+  ) {}
+
+  /**
+   * Find user by email or throw error if not found
+   * SQL:
+   * SELECT * FROM "User" WHERE "email" = $email LIMIT 1;
+   */
+  async existsByEmail(email: string) {
+    const user = this.prisma.user.findFirst({ where: { email } });
+    return !!user;
+  }
 
   /**
    * Create new user
@@ -13,9 +31,60 @@ export class UserService {
    * INSERT INTO "User" ("id", "name", "email", "createdAt")
    * VALUES (gen_random_uuid(), 'John Doe', 'john@example.com', now());
    */
-  create(dto: CreateUserDto) {
-    return this.prisma.user.create({ data: dto });
+  // create(dto: CreateUserDto) {
+  //   return this.prisma.user.create({ data: dto });
+  // }
+  async create(dto: CreateUserDto) {
+    const exists = await this.existsByEmail(dto.email);
+    if (exists) throw new ConflictException('Email is already in use');
+    return this.prisma.user.create({
+      data: {
+        name: dto.name,
+        email: dto.email,
+        profile: {
+          create: {
+            bio: 'Welcome to my profile!',
+          },
+        },
+      },
+    });
   }
+
+  // async createUserWithProfile(dto: CreateUserDto) {
+  //   return this.prisma.$transaction(async (tx) => {
+  //     const user = await tx.user.create({
+  //       data: {
+  //         name: dto.name,
+  //         email: dto.email,
+  //       },
+  //     });
+  //     const profile = await tx.profile.create({
+  //       data: {
+  //         bio: 'Welcome to my profile!',
+  //         userId: user.id,
+  //       },
+  //     });
+  //     return { ...user, profile };
+  //   });
+  // }
+  // async createUserWithProfile(dto: CreateUserDto) {
+  //   return this.prisma.$transaction(async (tx) => {
+  //     const user = await tx.user.create({
+  //       data: {
+  //         name: dto.name,
+  //         email: dto.email,
+  //       },
+  //     });
+  //     const profile = await this.profilePrisma.create(
+  //       {
+  //         bio: 'Welcome to my profile!',
+  //         userId: user.id,
+  //       },
+  //       tx,
+  //     );
+  //     return { ...user, profile };
+  //   });
+  // }
 
   /**
    * Get all users with profile and posts

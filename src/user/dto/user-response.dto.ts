@@ -28,6 +28,7 @@ export class UserResponseDto implements User {
 
   //   Optional relation
   @ApiProperty({ type: () => ProfileResponseDto, required: false })
+  @Expose()
   @Type(() => ProfileResponseDto)
   profile?: ProfileResponseDto;
 
