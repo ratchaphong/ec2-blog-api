@@ -26,19 +26,20 @@ RUN yarn build
 
 # --- 2) Production Stage ---
 FROM node:20-alpine AS prod
-# Prisma runtime บน Alpine
 RUN apk add --no-cache openssl libc6-compat
 
 WORKDIR /app
 
 # คัดลอกของที่จำเป็นจาก builder
 COPY --from=builder /app/package.json /app/yarn.lock ./
-COPY --from=builder /app/node_modules ./node_modules   # เก็บ prisma CLI ไว้ใช้ตอน runtime
+
+# คัดลอก node_modules เพื่อให้ prisma CLI ใช้ตอน runtime
+COPY --from=builder /app/node_modules ./node_modules
+
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
 ENV NODE_ENV=production
 EXPOSE 4000
-
-# ค่า default (workflow ของคุณจะ override อยู่แล้ว)
 CMD ["node", "dist/src/main.js"]
+
