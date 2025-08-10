@@ -1,39 +1,36 @@
-# --- 1. Build Stage ---
+# --- 1) Build Stage ---
 FROM node:20-alpine AS builder
+# Prisma บน Alpine ต้องใช้ openssl + libc6-compat
+RUN apk add --no-cache openssl libc6-compat
 
 WORKDIR /app
 
-# Install dependencies separately to optimize caching
+# ติดตั้ง deps แบบ cache-friendly
 COPY package*.json ./
 RUN npm ci
 
-# Copy the rest of the code
+# คัดลอกโค้ดทั้งหมด
 COPY . .
 
-# Generate Prisma client (adjust if your schema is in another folder)
+# สร้าง Prisma Client และ build NestJS
 RUN npx prisma generate
-
-# Build the NestJS app
 RUN npm run build
 
-# --- 2. Production Stage ---
+# --- 2) Production Stage ---
 FROM node:20-alpine AS prod
+# ให้ Prisma runtime ทำงานได้บน Alpine
+RUN apk add --no-cache openssl libc6-compat
 
 WORKDIR /app
 
-# Only copy package.json and built files, NOT node_modules
+# คัดลอกของที่จำเป็นจาก builder
 COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/node_modules ./node_modules   # คง prisma CLI เพื่อใช้ npx prisma ตอน runtime
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-# If you use Prisma migrations at runtime (optional)
-# COPY --from=builder /app/prisma ./prisma
-
 ENV NODE_ENV=production
-
-# Start the app
-CMD ["node", "dist/main"]
-
-# Expose the port (change if you use a different port)
 EXPOSE 4000
+
+# ค่า default (จะถูก override โดย workflow ที่ใช้ sh -c ...)
+CMD ["node", "dist/src/main.js"]

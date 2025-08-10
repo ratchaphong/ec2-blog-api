@@ -1,49 +1,53 @@
-# 👉 ชื่อ workflow ที่จะแสดงในแท็บ Actions บน GitHub
 name: Deploy to Self-Hosted Server via DockerHub
 
-# 👉 กำหนดว่า workflow นี้จะทำงานเมื่อ push ไปยัง branch develop
 on:
   push:
     branches:
       - develop
 
 jobs:
-  # 👉 Job แรก: สร้าง Docker image และ push ไป DockerHub
   build:
-    runs-on: ubuntu-latest # ใช้ runner ของ GitHub เอง (ไม่ใช่ self-hosted)
+    runs-on: ubuntu-latest
 
     steps:
-      # 👉 โหลด source code ของคุณจาก GitHub
       - name: Checkout source
         uses: actions/checkout@v4
 
-      # 👉 Login ไปยัง DockerHub โดยใช้ Secrets ที่ตั้งไว้
       - name: Login to DockerHub
-        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      # 👉 สร้าง Docker image โดยใช้ Dockerfile ใน root
       - name: Build Docker Image
-        run: docker build -t ratchaphongc1/test-cloud-sv . # <== เปลี่ยนให้ตรงกับคุณ
+        run: docker build -t ratchaphongc1/ec2-jarmal-image-round-2:latest .
 
-      # 👉 Push image ไปยัง DockerHub
       - name: Push Docker Image to DockerHub
-        run: docker push ratchaphongc1/test-cloud-sv:latest
+        run: docker push ratchaphongc1/ec2-jarmal-image-round-2:latest
 
-  # 👉 Job ที่สอง: ใช้ runner ที่ติดตั้งใน server จริงเพื่อ deploy container ใหม่
   deploy:
     name: Deploy to Self-hosted Server
-    needs: build # 👉 ให้รอ job build เสร็จก่อนค่อยทำ deploy
-    runs-on: self-hosted # 👉 ใช้ runner ที่รันอยู่ใน server จริงของคุณ
+    needs: build
+    runs-on: self-hosted
 
     steps:
-      # 👉 ดึง image ล่าสุดจาก DockerHub มาลง server
       - name: Pull latest image from DockerHub
-        run: docker pull ratchaphongc1/test-cloud-sv:latest
+        run: docker pull ratchaphongc1/ec2-jarmal-image-round-2:latest
 
-      # 👉 ลบ container เก่า (ถ้ามี) เพื่อให้รัน container ใหม่ได้
       - name: Stop and remove old container (if exists)
-        run: docker rm -f test-cloud-sv-container || true
+        run: docker rm -f ec2-jarmal-container-round-2 || true
 
-      # 👉 รัน container ใหม่จาก image ล่าสุด
+      - name: Create .env file on the server
+        run: |
+          {
+            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}";
+            # echo "PORT=4000";
+            # echo "NODE_ENV=production";
+          } > .env
+
       - name: Run new container
-        run: docker run -d -p 4000:4000 --name test-cloud-sv-container ratchaphongc1/test-cloud-sv:latest
+        run: |
+          docker run -d \
+            -p 4000:4000 \
+            --env-file .env \
+            --name ec2-jarmal-container-round-2 \
+            --restart unless-stopped \
+            ratchaphongc1/ec2-jarmal-image-round-2:latest \
+            sh -c "npx prisma migrate deploy && npx prisma generate && node dist/src/main.js"
