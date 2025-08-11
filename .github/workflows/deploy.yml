@@ -28,6 +28,14 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      - name: Free space before pull
+        run: |
+          docker ps -aq --filter status=exited | xargs -r docker rm -f || true
+          docker image prune -a -f || true
+          docker builder prune -af || true
+          df -h || true
+          docker system df || true
+
       - name: Pull latest image from DockerHub
         run: docker pull ratchaphongc1/ec2-jarmal-image-round-2:latest
 
