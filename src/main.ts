@@ -12,6 +12,16 @@ async function bootstrap() {
   console.log(`📚 Swagger: /swagger`);
   console.log(`🔗 DATABASE_URL: ${process.env.DATABASE_URL || ''}`);
 
+  app.enableCors({
+    origin: [
+      'http://localhost:3001', // dev frontend ของคุณ
+      'http://13.229.80.189', // prod frontend (ถ้ามีโดเมนค่อยใส่โดเมนแทน IP)
+    ],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: false, // ถ้ามี cookie/credential ค่อยเปลี่ยนเป็น true
+  });
+
   const config = new DocumentBuilder()
     .setTitle('Blog API')
     .setDescription('The blog API with NestJS + Prisma')
