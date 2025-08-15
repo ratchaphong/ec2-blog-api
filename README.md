@@ -1,81 +1,43 @@
-## 📦 Prisma Database Schema Overview
+# 📚 Blog API
 
-This project uses **Prisma ORM** with **PostgreSQL** to define the database schema.  
-Below is the complete structure of the data models and their relationships.
+RESTful API สำหรับระบบ Blog ที่รองรับการจัดการผู้ใช้, โปรไฟล์, โพสต์, หมวดหมู่, และคอมเมนต์  
+สร้างด้วย **NestJS + Prisma + PostgreSQL** และมี **Swagger** สำหรับทดสอบ API
 
----
+## 🚀 Features
 
-### 🧑‍💼 `User`
+- **User Management**: สมัครสมาชิก, จัดการข้อมูลผู้ใช้
+- **Profile Management**: ข้อมูลโปรไฟล์แบบ 1-1 ต่อผู้ใช้
+- **Post Management**: สร้าง/แก้ไข/ลบโพสต์, ตั้งสถานะ Published
+- **Category Management**: จัดหมวดหมู่ของโพสต์ (Many-to-Many)
+- **Comment System**: คอมเมนต์และการตอบกลับ (Nested Comments)
+- **Swagger API Docs**: ทดสอบ API ได้ผ่านเบราว์เซอร์
 
-| Field       | Type       | Description                        |
-| ----------- | ---------- | ---------------------------------- |
-| `id`        | `String`   | Primary Key (UUID)                 |
-| `name`      | `String`   | Name of the user                   |
-| `email`     | `String`   | Unique Email                       |
-| `profile`   | `Profile?` | Optional relation to Profile (1:1) |
-| `posts`     | `Post[]`   | Relation to Posts (1:N)            |
-| `createdAt` | `DateTime` | Timestamp of creation              |
+## 🛠 Tech Stack
 
----
+- **Backend**: [NestJS](https://nestjs.com/) + [Prisma ORM](https://www.prisma.io/)
+- **Database**: PostgreSQL
+- **API Docs**: Swagger
+- **Container**: Docker & Docker Compose
 
-### 👤 `Profile`
+## 📦 Installation
 
-| Field    | Type      | Description            |
-| -------- | --------- | ---------------------- |
-| `id`     | `String`  | Primary Key (UUID)     |
-| `bio`    | `String?` | Short bio (optional)   |
-| `userId` | `String`  | Unique FK to User      |
-| `user`   | `User`    | Relation to User (1:1) |
+```bash
+# 1. Clone repo
+git clone <your-repo-url>
+cd blog_api
 
----
+# 2. ติดตั้ง dependencies
+yarn install  # หรือ npm install
 
-### 📝 `Post`
+# 3. ตั้งค่า Environment variables
+cp .env.example .env
 
-| Field        | Type         | Description                         |
-| ------------ | ------------ | ----------------------------------- |
-| `id`         | `String`     | Primary Key (UUID)                  |
-| `title`      | `String`     | Title of the post                   |
-| `content`    | `String?`    | Post content (optional)             |
-| `published`  | `Boolean`    | Post publication status             |
-| `authorId`   | `String`     | FK to User                          |
-| `author`     | `User`       | Relation to User (N:1)              |
-| `categories` | `Category[]` | Many-to-Many relation to Categories |
-| `comments`   | `Comment[]`  | 1:N relation to Comments            |
-| `createdAt`  | `DateTime`   | Timestamp of creation               |
+# 4. รันด้วย Docker (PostgreSQL + Adminer)
+docker compose up -d
 
----
+# 5. รัน Prisma migration
+npx prisma migrate dev
 
-### 🏷️ `Category`
-
-| Field   | Type     | Description             |
-| ------- | -------- | ----------------------- |
-| `id`    | `String` | Primary Key (UUID)      |
-| `name`  | `String` | Category name           |
-| `posts` | `Post[]` | Relation to Posts (N:M) |
-
----
-
-### 💬 `Comment`
-
-| Field       | Type        | Description                    |
-| ----------- | ----------- | ------------------------------ |
-| `id`        | `String`    | Primary Key (UUID)             |
-| `content`   | `String`    | Content of the comment         |
-| `postId`    | `String`    | FK to Post                     |
-| `post`      | `Post`      | Relation to Post (N:1)         |
-| `parentId`  | `String?`   | Self-referencing FK (optional) |
-| `parent`    | `Comment?`  | Parent comment (optional)      |
-| `replies`   | `Comment[]` | Replies to this comment (1:N)  |
-| `createdAt` | `DateTime`  | Timestamp of creation          |
-
----
-
-### 🧭 Entity Relationship Summary
-
-- `User` ↔ `Profile`: One-to-One
-- `User` → `Post[]`: One-to-Many
-- `Post` ↔ `Category[]`: Many-to-Many
-- `Post` → `Comment[]`: One-to-Many
-- `Comment` ↔ `Comment`: Self-relation (Replies)
-
----
+# 6. รันโปรเจกต์
+yarn start:dev
+```

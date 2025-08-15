@@ -8,6 +8,11 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
+  // const GLOBAL_PREFIX = process.env.GLOBAL_PREFIX || '';
+  // if (GLOBAL_PREFIX) {
+  //   app.setGlobalPrefix(GLOBAL_PREFIX);
+  // }
+
   console.log(`🚀 Server listening on port ${PORT}`);
   console.log(`📚 Swagger: /swagger`);
   console.log(`🔗 DATABASE_URL: ${process.env.DATABASE_URL || ''}`);
@@ -26,7 +31,8 @@ async function bootstrap() {
     .setTitle('Blog API')
     .setDescription('The blog API with NestJS + Prisma')
     .setVersion('1.0')
-    .addServer('/api') // << สำคัญ
+    .addServer('/api', 'Production API') // สำหรับที่ใช้งานจริง
+    .addServer('/', 'Local Development API') // สำหรับทดสอบบน local  .addServer('/api') // << สำคัญ
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
