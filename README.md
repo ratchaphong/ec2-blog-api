@@ -41,3 +41,18 @@ npx prisma migrate dev
 # 6. รันโปรเจกต์
 yarn start:dev
 ```
+
+## 📄 API Documentation
+
+หลังจากรันเซิร์ฟเวอร์แล้วสามารถเปิด Swagger ได้ที่: http://localhost:3000/api
+
+## 🗄 Database Design
+
+DB Diagram: https://dbdiagram.io/d/blog_db-689e10961d75ee360aa3dad3
+
+Entities:
+users – จัดเก็บข้อมูลผู้ใช้  
+profiles – โปรไฟล์แบบ 1-1 กับผู้ใช้  
+posts – โพสต์บทความ  
+categories – หมวดหมู่ของโพสต์  
+comments – ระบบคอมเมนต์ (รองรับ reply)
